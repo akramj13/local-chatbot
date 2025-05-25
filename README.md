@@ -17,59 +17,63 @@ A complete chatbot application with a FastAPI backend and Next.js frontend, desi
 ### Prerequisites
 
 1. **Docker & Docker Compose** installed
-2. **Ollama** running locally on port 11434
-3. **Models** downloaded in Ollama:
-   ```bash
-   ollama pull gemma3:1b
-   ollama pull qwen3:1.7b
-   ```
-4. **Environment Configuration**: Create a `.env` file in the `chatbot-api/` directory
+2. **Internet connection** for downloading AI models
 
-### Setup Environment
+### Easy Setup (Recommended)
 
-Create a `.env` file in the `chatbot-api/` directory with the following content:
-
-```bash
-# chatbot-api/.env
-OLLAMA_MODEL=qwen3:1.7b
-OLLAMA_BASE_URL=http://host.docker.internal:11434
-API_HOST=0.0.0.0
-API_PORT=8000
-LOG_LEVEL=INFO
-```
-
-### Production Deployment
+Use the automated setup script:
 
 ```bash
 # Clone the repository
 git clone <your-repo-url>
 cd local-chatbot
 
-# Create the environment file
-cp chatbot-api/.env.example chatbot-api/.env
-# Edit chatbot-api/.env with your settings
+# Run the setup script
+./setup-env.sh
 
 # Start the production stack
 make prod
-
-# Access the application
-# Frontend: http://localhost:3000
-# Backend API: http://localhost:8000
-# API Docs: http://localhost:8000/docs
 ```
 
-### Development Mode
+The setup script will:
 
-```bash
-# Start development stack with hot reloading
-make dev
+- ✅ Create the required `.env` file
+- ✅ Check Docker installation
+- ✅ Provide next steps
 
-# View logs
-make dev-logs
+### Manual Setup
 
-# Stop development stack
-make dev-down
-```
+If you prefer manual setup:
+
+1. **Create environment file**:
+
+   ```bash
+   # Create chatbot-api/.env
+   cat > chatbot-api/.env << 'EOF'
+   OLLAMA_MODEL=qwen3:1.7b
+   OLLAMA_BASE_URL=http://localhost:11434
+   API_HOST=0.0.0.0
+   API_PORT=8000
+   LOG_LEVEL=INFO
+   EOF
+   ```
+
+2. **Start the stack**:
+   ```bash
+   make prod
+   ```
+
+### First Run
+
+⏳ **Note**: The first run will download the `qwen3:1.7b` model (~1.4GB). This may take several minutes depending on your internet connection.
+
+### Access the Application
+
+Once the containers are healthy:
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
 
 ## 📋 Available Commands
 
@@ -85,6 +89,47 @@ make clean         # Clean up everything
 make health        # Check service health
 ```
 
+## 🤖 Model Management
+
+### Adding New Models
+
+You can add additional Ollama models using the `make add` command:
+
+```bash
+# Add a specific model (container must be running)
+make add MODEL=gemma3:1b
+make add MODEL=llama3.2:3b
+make add MODEL=mistral:7b
+
+# List all available models
+make list
+```
+
+### Changing the Default Model
+
+1. **Edit the environment file**:
+
+   ```bash
+   # Edit chatbot-api/.env
+   OLLAMA_MODEL=your-preferred-model
+   ```
+
+2. **Restart the stack**:
+   ```bash
+   make prod-down
+   make prod
+   ```
+
+### Popular Models to Try
+
+| Model         | Size   | Description               |
+| ------------- | ------ | ------------------------- |
+| `qwen3:1.7b`  | ~1.4GB | Fast, efficient (default) |
+| `gemma3:1b`   | ~1.1GB | Very fast, lightweight    |
+| `llama3.2:3b` | ~2.0GB | Balanced performance      |
+| `mistral:7b`  | ~4.1GB | High quality responses    |
+| `llama3.1:8b` | ~4.7GB | Advanced reasoning        |
+
 ## 🔧 Configuration
 
 ### Environment Variables
@@ -93,8 +138,8 @@ The application uses environment variables defined in `chatbot-api/.env`:
 
 **Backend Configuration (`chatbot-api/.env`):**
 
-- `OLLAMA_BASE_URL`: Ollama server URL (default: `http://host.docker.internal:11434`)
 - `OLLAMA_MODEL`: Default model (default: `qwen3:1.7b`)
+- `OLLAMA_BASE_URL`: Ollama server URL (default: `http://localhost:11434`)
 - `API_HOST`: API host (default: `0.0.0.0`)
 - `API_PORT`: API port (default: `8000`)
 - `LOG_LEVEL`: Logging level (default: `INFO`, use `DEBUG` for development)
@@ -109,7 +154,7 @@ Edit the `chatbot-api/.env` file to customize your setup:
 
 ```bash
 # chatbot-api/.env
-OLLAMA_BASE_URL=http://your-ollama-host:11434
+OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=your-preferred-model
 API_HOST=0.0.0.0
 API_PORT=8000
@@ -148,7 +193,7 @@ Models that use `<think>` tags get special treatment:
 
 ### Production Stack (`docker-compose.yml`)
 
-- **chatbot-api**: Production FastAPI backend
+- **chatbot-api**: Production FastAPI backend with Ollama
 - **chatbot-web**: Production Next.js frontend
 - **Health checks**: Automatic service monitoring
 - **Networks**: Isolated container communication
@@ -183,6 +228,7 @@ local-chatbot/
 │   └── package.json
 ├── docker-compose.yml       # Production stack
 ├── docker-compose.dev.yml   # Development stack
+├── setup-env.sh            # Environment setup script
 ├── Makefile                # Convenience commands
 └── README.md               # This file
 ```
@@ -221,37 +267,33 @@ Content-Type: application/json
 1. **Missing .env file**
 
    ```bash
-   # Create the environment file
+   # Use the setup script
+   ./setup-env.sh
+
+   # Or create manually
    cp chatbot-api/.env.example chatbot-api/.env
-   # Edit with your settings
    ```
 
-2. **Ollama Connection Failed**
+2. **Model download taking too long**
 
    ```bash
-   # Check if Ollama is running
-   curl http://localhost:11434/api/tags
+   # Check download progress
+   docker-compose logs -f chatbot-api
 
-   # Start Ollama if needed
-   ollama serve
-
-   # Update OLLAMA_BASE_URL in chatbot-api/.env if needed
+   # Try a smaller model
+   # Edit chatbot-api/.env and change OLLAMA_MODEL=gemma3:1b
    ```
 
-3. **Models Not Found**
+3. **Container health check failing**
 
    ```bash
-   # List available models
-   ollama list
+   # Check if model download is complete
+   docker-compose logs chatbot-api
 
-   # Pull required models
-   ollama pull gemma3:1b
-   ollama pull qwen3:1.7b
-
-   # Update OLLAMA_MODEL in chatbot-api/.env
+   # Wait for "FastAPI application started" message
    ```
 
-4. **Port Conflicts**
+4. **Port conflicts**
 
    ```bash
    # Check what's using the ports
@@ -261,7 +303,7 @@ Content-Type: application/json
    # Update API_PORT in chatbot-api/.env or change ports in docker-compose.yml
    ```
 
-5. **Docker Issues**
+5. **Docker issues**
 
    ```bash
    # Clean up Docker resources
@@ -283,7 +325,27 @@ make logs
 # Check individual services
 curl http://localhost:8000/api/v1/health
 curl http://localhost:3000
+
+# List available models
+make list
 ```
+
+### Performance Tips
+
+1. **Use smaller models for faster responses**:
+
+   - `gemma3:1b` - Very fast, good for testing
+   - `qwen3:1.7b` - Balanced (default)
+
+2. **Use larger models for better quality**:
+
+   - `llama3.2:3b` - Better reasoning
+   - `mistral:7b` - High quality responses
+
+3. **Monitor resource usage**:
+   ```bash
+   docker stats
+   ```
 
 ## 🤝 Contributing
 
