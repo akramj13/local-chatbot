@@ -1,125 +1,141 @@
+# Color definitions
+RED := \033[31m
+GREEN := \033[32m
+YELLOW := \033[33m
+BLUE := \033[34m
+MAGENTA := \033[35m
+CYAN := \033[36m
+WHITE := \033[37m
+BOLD := \033[1m
+RESET := \033[0m
+
 .PHONY: help build up down logs clean dev dev-down dev-logs prod prod-down prod-logs add list
 
 # Default target
 help:
-	@echo "Local Chatbot Docker Compose Commands:"
+	@echo "$(BOLD)$(CYAN)Local Chatbot Docker Compose Commands:$(RESET)"
 	@echo ""
-	@echo "Development:"
-	@echo "  make dev        - Start development stack with hot reloading"
-	@echo "  make dev-down   - Stop development stack"
-	@echo "  make dev-logs   - View development logs"
+	@echo "$(BOLD)$(GREEN)Development:$(RESET)"
+	@echo "  $(YELLOW)make dev$(RESET)        - Start development stack with hot reloading"
+	@echo "  $(YELLOW)make dev-down$(RESET)   - Stop development stack"
+	@echo "  $(YELLOW)make dev-logs$(RESET)   - View development logs"
 	@echo ""
-	@echo "Production:"
-	@echo "  make prod       - Build and start production stack"
-	@echo "  make prod-down  - Stop production stack"
-	@echo "  make prod-logs  - View production logs"
+	@echo "$(BOLD)$(GREEN)Production:$(RESET)"
+	@echo "  $(YELLOW)make prod$(RESET)       - Build and start production stack"
+	@echo "  $(YELLOW)make up$(RESET)         - Start production stack (without rebuilding)"
+	@echo "  $(YELLOW)make prod-down$(RESET)  - Stop production stack"
+	@echo "  $(YELLOW)make prod-logs$(RESET)  - View production logs"
 	@echo ""
-	@echo "Model Management:"
-	@echo "  make add MODEL=<name>  - Add a new Ollama model (e.g., make add MODEL=gemma3:1b)"
-	@echo "  make list              - List all available models"
+	@echo "$(BOLD)$(GREEN)Model Management:$(RESET)"
+	@echo "  $(YELLOW)make add MODEL=<name>$(RESET)  - Add a new Ollama model (e.g., make add MODEL=gemma3:1b)"
+	@echo "  $(YELLOW)make list$(RESET)              - List all available models"
 	@echo ""
-	@echo "General:"
-	@echo "  make build      - Build all images"
-	@echo "  make clean      - Remove all containers, images, and volumes"
-	@echo "  make logs       - View all logs"
+	@echo "$(BOLD)$(GREEN)General:$(RESET)"
+	@echo "  $(YELLOW)make build$(RESET)      - Build all images"
+	@echo "  $(YELLOW)make clean$(RESET)      - Remove all containers, images, and volumes"
+	@echo "  $(YELLOW)make logs$(RESET)       - View all logs"
 	@echo ""
-	@echo "Prerequisites:"
+	@echo "$(BOLD)$(MAGENTA)Prerequisites:$(RESET)"
 	@echo "  - Docker and Docker Compose installed"
 	@echo "  - Ollama running on host (port 11434)"
-	@echo "  - Models 'gemma3:1b' and 'qwen3:1.7b' available in Ollama"
 	@echo "  - Run './setup-env.sh' first to create environment file"
 
 # Development commands
 dev:
-	@echo "🚀 Starting development stack..."
+	@echo "$(GREEN)🚀 Starting development stack...$(RESET)"
 	docker-compose -f docker-compose.dev.yml up --build
 
 dev-down:
-	@echo "🛑 Stopping development stack..."
+	@echo "$(RED)🛑 Stopping development stack...$(RESET)"
 	docker-compose -f docker-compose.dev.yml down
 
 dev-logs:
-	@echo "📋 Viewing development logs..."
+	@echo "$(BLUE)📋 Viewing development logs...$(RESET)"
 	docker-compose -f docker-compose.dev.yml logs -f
 
 # Production commands
 prod:
-	@echo "🏭 Starting production stack..."
+	@echo "$(GREEN)🏭 Starting production stack...$(RESET)"
 	docker-compose up --build -d
-	@echo "✅ Production stack started!"
-	@echo "Frontend: http://localhost:3000"
-	@echo "Backend API: http://localhost:8000"
-	@echo "API Docs: http://localhost:8000/docs"
+	@echo "$(BOLD)$(GREEN)✅ Production stack started!$(RESET)"
+	@echo "$(CYAN)Frontend: http://localhost:3000$(RESET)"
+	@echo "$(CYAN)Backend API: http://localhost:8000$(RESET)"
+	@echo "$(CYAN)API Docs: http://localhost:8000/docs$(RESET)"
 
 prod-down:
-	@echo "🛑 Stopping production stack..."
+	@echo "$(RED)🛑 Stopping production stack...$(RESET)"
 	docker-compose down
 
 prod-logs:
-	@echo "📋 Viewing production logs..."
+	@echo "$(BLUE)📋 Viewing production logs...$(RESET)"
 	docker-compose logs -f
 
 # Model management commands
 add:
 	@if [ -z "$(MODEL)" ]; then \
-		echo "❌ Error: MODEL parameter is required."; \
-		echo "Usage: make add MODEL=<model-name>"; \
+		echo "$(RED)❌ Error: MODEL parameter is required.$(RESET)"; \
+		echo "$(YELLOW)Usage: make add MODEL=<model-name>$(RESET)"; \
 		echo ""; \
-		echo "Examples:"; \
-		echo "  make add MODEL=gemma3:1b"; \
-		echo "  make add MODEL=llama3.2:3b"; \
-		echo "  make add MODEL=mistral:7b"; \
+		echo "$(BOLD)Examples:$(RESET)"; \
+		echo "  $(CYAN)make add MODEL=gemma3:1b$(RESET)"; \
+		echo "  $(CYAN)make add MODEL=llama3.2:3b$(RESET)"; \
+		echo "  $(CYAN)make add MODEL=mistral:7b$(RESET)"; \
 		exit 1; \
 	fi
-	@echo "📥 Pulling model: $(MODEL)"
+	@echo "$(BLUE)📥 Pulling model: $(YELLOW)$(MODEL)$(RESET)"
 	@if ! docker ps | grep -q chatbot-api; then \
-		echo "❌ Error: chatbot-api container is not running."; \
-		echo "Please start the stack first with 'make prod' or 'make dev'"; \
+		echo "$(RED)❌ Error: chatbot-api container is not running.$(RESET)"; \
+		echo "$(YELLOW)Please start the stack first with 'make prod' or 'make dev'$(RESET)"; \
 		exit 1; \
 	fi
 	@docker exec chatbot-api ollama pull $(MODEL)
-	@echo "✅ Model $(MODEL) pulled successfully!"
+	@echo "$(GREEN)✅ Model $(YELLOW)$(MODEL)$(GREEN) pulled successfully!$(RESET)"
 
 list:
-	@echo "📋 Available models:"
+	@echo "$(BLUE)📋 Available models:$(RESET)"
 	@if ! docker ps | grep -q chatbot-api; then \
-		echo "❌ Error: chatbot-api container is not running."; \
-		echo "Please start the stack first with 'make prod' or 'make dev'"; \
+		echo "$(RED)❌ Error: chatbot-api container is not running.$(RESET)"; \
+		echo "$(YELLOW)Please start the stack first with 'make prod' or 'make dev'$(RESET)"; \
 		exit 1; \
 	fi
 	@docker exec chatbot-api ollama list
 
 # General commands
 build:
-	@echo "🔨 Building all images..."
+	@echo "$(YELLOW)🔨 Building all images...$(RESET)"
 	docker-compose build
 	docker-compose -f docker-compose.dev.yml build
 
 up:
-	@echo "🚀 Starting production stack..."
+	@echo "$(GREEN)🚀 Starting production stack (without rebuilding)...$(RESET)"
 	docker-compose up -d
+	@echo "$(BOLD)$(GREEN)✅ Production stack started!$(RESET)"
+	@echo "$(CYAN)Frontend: http://localhost:3000$(RESET)"
+	@echo "$(CYAN)Backend API: http://localhost:8000$(RESET)"
+	@echo "$(CYAN)API Docs: http://localhost:8000/docs$(RESET)"
+	open http://localhost:3000
 
 down:
-	@echo "🛑 Stopping all stacks..."
+	@echo "$(RED)🛑 Stopping all stacks...$(RESET)"
 	docker-compose down
 	docker-compose -f docker-compose.dev.yml down
 
 logs:
-	@echo "📋 Viewing logs..."
+	@echo "$(BLUE)📋 Viewing logs...$(RESET)"
 	docker-compose logs -f
 
 clean:
-	@echo "🧹 Cleaning up Docker resources..."
+	@echo "$(MAGENTA)🧹 Cleaning up Docker resources...$(RESET)"
 	docker-compose down -v --remove-orphans
 	docker-compose -f docker-compose.dev.yml down -v --remove-orphans
 	docker system prune -f
-	@echo "✅ Cleanup complete!"
+	@echo "$(GREEN)✅ Cleanup complete!$(RESET)"
 
 # Health check
 health:
-	@echo "🏥 Checking service health..."
-	@echo "API Health:"
-	@curl -s http://localhost:8000/api/v1/health | jq . || echo "API not responding"
+	@echo "$(CYAN)🏥 Checking service health...$(RESET)"
+	@echo "$(BOLD)API Health:$(RESET)"
+	@curl -s http://localhost:8000/api/v1/health | jq . || echo "$(RED)API not responding$(RESET)"
 	@echo ""
-	@echo "Frontend Health:"
-	@curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || echo "Frontend not responding" 
+	@echo "$(BOLD)Frontend Health:$(RESET)"
+	@curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || echo "$(RED)Frontend not responding$(RESET)" 
