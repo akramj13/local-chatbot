@@ -1,0 +1,54 @@
+services:
+  # Chatbot API Backend (Development)
+  chatbot-api-dev:
+    build:
+      context: ./chatbot-api
+      dockerfile: Dockerfile
+    container_name: chatbot-api-dev
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./chatbot-api/.env
+    environment:
+      - OLLAMA_BASE_URL=http://localhost:11434
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./chatbot-api:/app
+    networks:
+      - chatbot-network
+    command:
+      [
+        "python",
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
+
+  # Chatbot Web Frontend (Development)
+  chatbot-web-dev:
+    image: node:18-alpine
+    container_name: chatbot-web-dev
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - NODE_ENV=development
+    volumes:
+      - ./chatbot-web:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - chatbot-network
+    depends_on:
+      - chatbot-api-dev
+    command: sh -c "npm install && npm run dev"
+
+networks:
+  chatbot-network:
+    driver: bridge

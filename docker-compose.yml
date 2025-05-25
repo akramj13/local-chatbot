@@ -1,0 +1,52 @@
+services:
+  # Chatbot API Backend
+  chatbot-api:
+    build:
+      context: ./chatbot-api
+      dockerfile: Dockerfile
+    container_name: chatbot-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./chatbot-api/.env
+    environment:
+      - OLLAMA_BASE_URL=http://localhost:11434
+    networks:
+      - chatbot-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Chatbot Web Frontend
+  chatbot-web:
+    build:
+      context: ./chatbot-web
+      dockerfile: Dockerfile
+    container_name: chatbot-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - NODE_ENV=production
+    networks:
+      - chatbot-network
+    depends_on:
+      chatbot-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  chatbot-network:
+    driver: bridge
+
+volumes:
+  ollama_data:
+    driver: local
